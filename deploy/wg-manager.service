@@ -1,0 +1,27 @@
+[Unit]
+Description=WireGuard Proxy Manager Daemon
+After=network.target wg-quick@wg0.service
+Requires=wg-quick@wg0.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wg-manager
+Restart=always
+RestartSec=5
+
+# Configuração obrigatória — ajuste esses valores:
+Environment=WG_ENDPOINT=SEU-HOSTNAME.duckdns.org:51820
+Environment=SOCKET_PATH=/var/run/wg-manager.sock
+Environment=STATE_PATH=/var/lib/wg-manager/state.json
+Environment=GOST_BINARY=/usr/local/bin/gost
+Environment=WG_INTERFACE=wg0
+Environment=WG_SUBNET=10.0
+Environment=WG_SUBNET_CIDR=10.0.0.0/22
+Environment=WG_SERVER_IP=10.0.0.1
+Environment=WG_LISTEN_PORT=51820
+Environment=PROXY_PORT_BASE=1081
+Environment=PHONE_PROXY_PORT=1080
+Environment=MAX_DEVICES=1021
+
+[Install]
+WantedBy=multi-user.target

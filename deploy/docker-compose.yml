@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  backend:
+    image: wg-proxy-backend:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DATABASE_URL=postgres://proxy_manager:proxy_manager@postgres:5432/proxy_manager?sslmode=disable
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DAEMON_SOCKET=/var/run/wg-manager.sock
+      - HOST_IP=192.168.100.152
+    volumes:
+      - /var/run/wg-manager.sock:/var/run/wg-manager.sock
+    depends_on:
+      - postgres
+    networks:
+      - proxy-manager-net
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  dashboard:
+    image: wg-proxy-dashboard:latest
+    ports:
+      - "8088:80"
+    depends_on:
+      - backend
+    networks:
+      - proxy-manager-net
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=proxy_manager
+      - POSTGRES_USER=proxy_manager
+      - POSTGRES_PASSWORD=proxy_manager
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_proxy:/var/lib/postgresql/data
+    networks:
+      - proxy-manager-net
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  pgdata_proxy:
+
+networks:
+  proxy-manager-net:
+    driver: overlay
+    attachable: true

@@ -1,0 +1,39 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+
+# Go dependencies
+vendor/
+
+# Node.js
+node_modules/
+
+# Vite build output
+dashboard/dist/
+dashboard/.vite/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+*.pid
+*.log
+tmp/
