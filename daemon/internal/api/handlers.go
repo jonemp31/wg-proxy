@@ -204,6 +204,7 @@ func (h *Handler) listPeersHandler(w http.ResponseWriter, r *http.Request) {
 		TxRate          float64 `json:"tx_rate"`
 		LiveRxBytes     int64   `json:"live_rx_bytes"`
 		LiveTxBytes     int64   `json:"live_tx_bytes"`
+		ISP             string  `json:"isp,omitempty"`
 	}
 
 	result := make([]peerEntry, 0, len(devices))
@@ -218,6 +219,7 @@ func (h *Handler) listPeersHandler(w http.ResponseWriter, r *http.Request) {
 			entry.TxRate = s.TxRate
 			entry.LiveRxBytes = s.RxBytes
 			entry.LiveTxBytes = s.TxBytes
+			entry.ISP = s.ISP
 		}
 		result = append(result, entry)
 	}
@@ -333,6 +335,7 @@ func (h *Handler) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		TxBytes         int64   `json:"tx_bytes"`
 		RxRate          float64 `json:"rx_rate"`
 		TxRate          float64 `json:"tx_rate"`
+		ISP             string  `json:"isp,omitempty"`
 	}
 
 	result := make([]metricEntry, 0, len(devices))
@@ -353,6 +356,7 @@ func (h *Handler) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			entry.TxBytes = s.TxBytes
 			entry.RxRate = s.RxRate
 			entry.TxRate = s.TxRate
+			entry.ISP = s.ISP
 		}
 		result = append(result, entry)
 	}

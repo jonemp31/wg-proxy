@@ -2,9 +2,12 @@ package monitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net"
+	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,6 +30,7 @@ type PeerStatus struct {
 	TxBytes         int64   `json:"tx_bytes"`
 	RxRate          float64 `json:"rx_rate"`
 	TxRate          float64 `json:"tx_rate"`
+	ISP             string  `json:"isp,omitempty"`
 }
 
 type Monitor struct {
@@ -39,6 +43,8 @@ type Monitor struct {
 	prevTx    map[string]int64
 	lastPoll  time.Time
 	pollCount int
+
+	ispCache map[string]string // IP -> ISP name
 }
 
 func New(wg *wireguard.Manager, store *state.Store) *Monitor {
@@ -48,6 +54,7 @@ func New(wg *wireguard.Manager, store *state.Store) *Monitor {
 		statuses: make(map[string]*PeerStatus),
 		prevRx:   make(map[string]int64),
 		prevTx:   make(map[string]int64),
+		ispCache: make(map[string]string),
 	}
 }
 
@@ -165,6 +172,21 @@ func (m *Monitor) poll() {
 			if dev, ok := m.store.GetByPublicKey(peer.PublicKey); ok {
 				slog.Info("peer ip changed", "device_id", dev.ID,
 					"old", prev.Endpoint, "new", status.Endpoint)
+			}
+		}
+
+		// ISP lookup (cached by IP)
+		if status.Endpoint != "" {
+			ip := extractIP(status.Endpoint)
+			if ip != "" {
+				if isp, ok := m.ispCache[ip]; ok {
+					status.ISP = isp
+				} else {
+					go m.lookupISP(ip, peer.PublicKey)
+					if existed && prev.ISP != "" {
+						status.ISP = prev.ISP
+					}
+				}
 			}
 		}
 
@@ -293,6 +315,44 @@ func (m *Monitor) GetAllStatuses() map[string]*PeerStatus {
 		result[k] = &copy
 	}
 	return result
+}
+
+func extractIP(endpoint string) string {
+	for i := len(endpoint) - 1; i >= 0; i-- {
+		if endpoint[i] == ':' {
+			return endpoint[:i]
+		}
+	}
+	return endpoint
+}
+
+func (m *Monitor) lookupISP(ip, pubKey string) {
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(fmt.Sprintf("http://ip-api.com/json/%s?fields=isp", ip))
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return
+	}
+	var result struct {
+		ISP string `json:"isp"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return
+	}
+	isp := strings.TrimSpace(result.ISP)
+	if isp == "" {
+		return
+	}
+	m.mu.Lock()
+	m.ispCache[ip] = isp
+	if s, ok := m.statuses[pubKey]; ok {
+		s.ISP = isp
+	}
+	m.mu.Unlock()
+	slog.Info("ISP resolved", "ip", ip, "isp", isp)
 }
 
 func (m *Monitor) GetStatus(publicKey string) (*PeerStatus, bool) {

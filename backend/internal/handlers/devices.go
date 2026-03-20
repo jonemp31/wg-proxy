@@ -46,6 +46,7 @@ func (h *DeviceHandler) List(w http.ResponseWriter, r *http.Request) {
 		Rx24h        int64   `json:"rx_bytes_24h"`
 		Tx24h        int64   `json:"tx_bytes_24h"`
 		ProxyURL     string  `json:"proxy_url"`
+		ISP          string  `json:"isp,omitempty"`
 	}
 
 	peerMap := make(map[int]daemon.PeerEntry)
@@ -68,6 +69,7 @@ func (h *DeviceHandler) List(w http.ResponseWriter, r *http.Request) {
 			resp.Endpoint = p.Endpoint
 			resp.RxRate = p.RxRate
 			resp.TxRate = p.TxRate
+			resp.ISP = p.ISP
 		}
 		if t, ok := traffic24h[dev.ID]; ok {
 			resp.Rx24h = t.Rx24h
@@ -305,6 +307,7 @@ func (h *DeviceHandler) pollMetrics() {
 			"rx_bytes":      m.RxBytes,
 			"tx_bytes":      m.TxBytes,
 			"real_ip":       realIP,
+			"isp":           m.ISP,
 		})
 	}
 

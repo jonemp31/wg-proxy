@@ -48,7 +48,9 @@ export default function DeviceCard({ device, onRemove }) {
 
         <div className="flex items-center gap-2 text-xs">
           {device.real_ip && (
-            <span className="text-gray-400">IP: {device.real_ip}</span>
+            <span className="text-gray-400">
+              IP: {device.real_ip}{device.isp ? ` | ${device.isp}` : ''}
+            </span>
           )}
           <button
             onClick={handleRemove}

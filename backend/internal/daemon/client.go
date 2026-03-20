@@ -44,6 +44,7 @@ type PeerEntry struct {
 	TxRate          float64 `json:"tx_rate"`
 	LiveRxBytes     int64   `json:"live_rx_bytes"`
 	LiveTxBytes     int64   `json:"live_tx_bytes"`
+	ISP             string  `json:"isp,omitempty"`
 }
 
 type MetricEntry struct {
@@ -59,6 +60,7 @@ type MetricEntry struct {
 	TxBytes         int64   `json:"tx_bytes"`
 	RxRate          float64 `json:"rx_rate"`
 	TxRate          float64 `json:"tx_rate"`
+	ISP             string  `json:"isp,omitempty"`
 }
 
 type ProxyEntry struct {

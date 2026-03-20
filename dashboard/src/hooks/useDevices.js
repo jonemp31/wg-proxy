@@ -49,6 +49,7 @@ export function useDevices() {
                 rx_bytes: update.rx_bytes ?? dev.rx_bytes,
                 tx_bytes: update.tx_bytes ?? dev.tx_bytes,
                 real_ip: update.real_ip,
+                isp: update.isp || dev.isp,
               }
             }
             return dev
