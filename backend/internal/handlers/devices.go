@@ -60,7 +60,7 @@ func (h *DeviceHandler) List(w http.ResponseWriter, r *http.Request) {
 		resp := deviceResponse{
 			Device:       dev,
 			HealthStatus: "offline",
-			ProxyURL:     fmt.Sprintf("socks5://%s:****@%s:%d", dev.ProxyUser, h.cfg.HostIP, dev.ProxyPort),
+			ProxyURL:     fmt.Sprintf("socks5://%s:%s@%s:%d", dev.ProxyUser, dev.ProxyPass, h.cfg.HostIP, dev.ProxyPort),
 		}
 		if p, ok := peerMap[dev.ID]; ok {
 			resp.Online = p.Online

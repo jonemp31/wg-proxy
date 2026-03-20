@@ -2,12 +2,12 @@ import { useState } from 'react'
 
 export default function ProxyInfo({ device }) {
   const [showPass, setShowPass] = useState(false)
-  const proxyUrl = device.proxy_url || `socks5://${device.proxy_user}:****@192.168.100.152:${device.proxy_port}`
+  const fullUrl = device.proxy_url || `socks5://${device.proxy_user}:****@192.168.100.152:${device.proxy_port}`
+  const maskedUrl = fullUrl.replace(/:([^:@]+)@/, ':****@')
 
   const [copied, setCopied] = useState(false)
 
   const copyProxy = () => {
-    const fullUrl = `socks5://${device.proxy_user}:${device.proxy_pass || '****'}@192.168.100.152:${device.proxy_port}`
     try {
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(fullUrl)
@@ -31,7 +31,7 @@ export default function ProxyInfo({ device }) {
   return (
     <div className="flex items-center gap-2 text-xs">
       <code className="bg-gray-900 px-2 py-1 rounded text-gray-300 flex-1 truncate">
-        {showPass ? proxyUrl.replace('****', device.proxy_pass || '****') : proxyUrl}
+        {showPass ? fullUrl : maskedUrl}
       </code>
       <button
         onClick={() => setShowPass(!showPass)}
