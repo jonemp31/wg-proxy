@@ -67,7 +67,7 @@ func (d *DB) GetDevice(ctx context.Context, id int) (*models.Device, error) {
 
 func (d *DB) GetAllDevices(ctx context.Context) ([]models.Device, error) {
 	rows, err := d.Pool.Query(ctx,
-		`SELECT id, name, wg_public_key, wg_ip, proxy_port, proxy_user,
+		`SELECT id, name, wg_public_key, wg_ip, proxy_port, proxy_user, proxy_pass,
 			status, real_ip, last_handshake, rx_bytes, tx_bytes,
 			created_at, updated_at
 		FROM devices ORDER BY id`)
@@ -79,14 +79,16 @@ func (d *DB) GetAllDevices(ctx context.Context) ([]models.Device, error) {
 	var devices []models.Device
 	for rows.Next() {
 		var dev models.Device
+		var encPass string
 		if err := rows.Scan(
 			&dev.ID, &dev.Name, &dev.WGPublicKey, &dev.WGIP,
-			&dev.ProxyPort, &dev.ProxyUser,
+			&dev.ProxyPort, &dev.ProxyUser, &encPass,
 			&dev.Status, &dev.RealIP, &dev.LastHandshake, &dev.RxBytes, &dev.TxBytes,
 			&dev.CreatedAt, &dev.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+		dev.ProxyPass, _ = d.enc.Decrypt(encPass)
 		devices = append(devices, dev)
 	}
 
