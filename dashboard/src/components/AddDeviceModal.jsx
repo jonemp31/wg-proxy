@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getQRCodeUrl } from '../services/api'
 
 export default function AddDeviceModal({ onAdd, onClose }) {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [qrUrl, setQrUrl] = useState(null)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
 
@@ -70,11 +72,7 @@ export default function AddDeviceModal({ onAdd, onClose }) {
         ) : (
           <div>
             <div className="text-center mb-4">
-              <img
-                src={`/api/devices/${result.device?.id || result.device_id}/qrcode`}
-                alt="QR Code"
-                className="mx-auto w-64 h-64 bg-white rounded p-2"
-              />
+              <QRImage deviceId={result.device?.id || result.device_id} />
               <p className="text-sm text-gray-400 mt-2">
                 Escaneie com o app WireGuard no celular
               </p>
@@ -122,5 +120,20 @@ export default function AddDeviceModal({ onAdd, onClose }) {
         )}
       </div>
     </div>
+  )
+}
+
+function QRImage({ deviceId }) {
+  const [src, setSrc] = useState(null)
+  useEffect(() => {
+    getQRCodeUrl(deviceId).then(setSrc)
+  }, [deviceId])
+  if (!src) return <div className="mx-auto w-64 h-64 bg-white rounded p-2" />
+  return (
+    <img
+      src={src}
+      alt="QR Code"
+      className="mx-auto w-64 h-64 bg-white rounded p-2"
+    />
   )
 }
