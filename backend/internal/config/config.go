@@ -8,6 +8,9 @@ type Config struct {
 	EncryptionKey string
 	DaemonSocket  string
 	HostIP        string
+	JWTSecret     string
+	AdminUser     string
+	AdminPassword string
 }
 
 func Load() *Config {
@@ -17,6 +20,9 @@ func Load() *Config {
 		EncryptionKey: getEnv("ENCRYPTION_KEY", ""),
 		DaemonSocket:  getEnv("DAEMON_SOCKET", "/var/run/wg-manager.sock"),
 		HostIP:        getEnv("HOST_IP", "192.168.100.152"),
+		JWTSecret:     getEnv("JWT_SECRET", ""),
+		AdminUser:     getEnv("ADMIN_USER", "jonatan"),
+		AdminPassword: getEnv("ADMIN_PASSWORD", "xstark1kk"),
 	}
 }
 

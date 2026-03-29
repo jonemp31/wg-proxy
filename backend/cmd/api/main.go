@@ -51,6 +51,16 @@ func main() {
 	}
 	slog.Info("database migrations complete")
 
+	if err := database.SeedDefaultUser(ctx, cfg.AdminUser, cfg.AdminPassword); err != nil {
+		slog.Error("failed to seed default user", "error", err)
+		os.Exit(1)
+	}
+
+	if cfg.JWTSecret == "" {
+		slog.Error("JWT_SECRET not set")
+		os.Exit(1)
+	}
+
 	daemonClient := daemon.NewClient(cfg.DaemonSocket)
 
 	hub := ws.NewHub()
@@ -59,11 +69,13 @@ func main() {
 	deviceHandler := handlers.NewDeviceHandler(database, daemonClient, hub, cfg)
 	proxyHandler := handlers.NewProxyHandler(daemonClient, cfg)
 	metricsHandler := handlers.NewMetricsHandler(database, daemonClient)
+	webhookHandler := handlers.NewWebhookHandler(database, cfg)
+	authHandler := handlers.NewAuthHandler(database, cfg)
 
 	// Start metrics polling (every 15 seconds)
 	deviceHandler.StartPolling(15 * time.Second)
 
-	router := api.NewRouter(deviceHandler, proxyHandler, metricsHandler, hub)
+	router := api.NewRouter(deviceHandler, proxyHandler, metricsHandler, webhookHandler, authHandler, hub, cfg.JWTSecret, database)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,

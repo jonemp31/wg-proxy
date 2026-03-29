@@ -296,6 +296,10 @@ func (h *DeviceHandler) pollMetrics() {
 				DeviceID:  dev.ID,
 				EventType: newStatus,
 			})
+
+			NotifyStatusChange(h.db, h.cfg.HostIP, dev.ID, dev.Name, dev.ProxyPort, dev.ProxyUser, dev.ProxyPass, dev.Status, healthStatus)
+		} else if dev.Status == "online" && healthStatus == "degraded" {
+			NotifyStatusChange(h.db, h.cfg.HostIP, dev.ID, dev.Name, dev.ProxyPort, dev.ProxyUser, dev.ProxyPass, "online", "degraded")
 		}
 
 		updates = append(updates, map[string]any{

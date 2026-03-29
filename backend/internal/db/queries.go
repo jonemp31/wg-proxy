@@ -215,3 +215,51 @@ func (d *DB) GetEvents(ctx context.Context, deviceID int, limit int) ([]models.D
 
 	return events, nil
 }
+
+func (d *DB) GetSetting(ctx context.Context, key string) (string, error) {
+	var value string
+	err := d.Pool.QueryRow(ctx, `SELECT value FROM settings WHERE key = $1`, key).Scan(&value)
+	if err != nil {
+		return "", err
+	}
+	return value, nil
+}
+
+func (d *DB) SetSetting(ctx context.Context, key, value string) error {
+	_, err := d.Pool.Exec(ctx,
+		`INSERT INTO settings (key, value) VALUES ($1, $2)
+		 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+		key, value,
+	)
+	return err
+}
+
+func (d *DB) DeleteSetting(ctx context.Context, key string) error {
+	_, err := d.Pool.Exec(ctx, `DELETE FROM settings WHERE key = $1`, key)
+	return err
+}
+
+type User struct {
+	ID           int    `json:"id"`
+	Username     string `json:"username"`
+	PasswordHash string `json:"-"`
+}
+
+func (d *DB) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+	u := &User{}
+	err := d.Pool.QueryRow(ctx,
+		`SELECT id, username, password_hash FROM users WHERE username = $1`, username,
+	).Scan(&u.ID, &u.Username, &u.PasswordHash)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func (d *DB) UpdateUserPassword(ctx context.Context, id int, passwordHash string) error {
+	_, err := d.Pool.Exec(ctx,
+		`UPDATE users SET password_hash = $2 WHERE id = $1`,
+		id, passwordHash,
+	)
+	return err
+}

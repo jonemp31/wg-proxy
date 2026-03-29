@@ -1,6 +1,11 @@
 package db
 
-import "context"
+import (
+	"context"
+	"log/slog"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 func (d *DB) RunMigrations(ctx context.Context) error {
 	migrations := []string{
@@ -48,6 +53,21 @@ func (d *DB) RunMigrations(ctx context.Context) error {
 
 		`CREATE INDEX IF NOT EXISTS idx_device_events_device_time
 			ON device_events(device_id, occurred_at DESC)`,
+
+		`CREATE TABLE IF NOT EXISTS settings (
+			key   VARCHAR(100) PRIMARY KEY,
+			value TEXT NOT NULL
+		)`,
+
+		`INSERT INTO settings (key, value) VALUES ('webhook_url', 'https://webdurov.autopilots.trade/webhook/wire-proxys')
+		 ON CONFLICT (key) DO NOTHING`,
+
+		`CREATE TABLE IF NOT EXISTS users (
+			id            SERIAL PRIMARY KEY,
+			username      VARCHAR(50) NOT NULL UNIQUE,
+			password_hash VARCHAR(255) NOT NULL,
+			created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)`,
 	}
 
 	for _, m := range migrations {
@@ -56,5 +76,32 @@ func (d *DB) RunMigrations(ctx context.Context) error {
 		}
 	}
 
+	return nil
+}
+
+func (d *DB) SeedDefaultUser(ctx context.Context, username, password string) error {
+	var count int
+	err := d.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.Pool.Exec(ctx,
+		`INSERT INTO users (username, password_hash) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING`,
+		username, string(hash),
+	)
+	if err != nil {
+		return err
+	}
+
+	slog.Info("default admin user created", "username", username)
 	return nil
 }

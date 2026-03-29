@@ -7,7 +7,9 @@ export function useWebSocket(url) {
   const retriesRef = useRef(0)
 
   const connect = useCallback(() => {
-    const wsUrl = url || `ws://${window.location.host}/ws`
+    const token = localStorage.getItem('token')
+    const base = url || `ws://${window.location.host}/ws`
+    const wsUrl = token ? `${base}?token=${encodeURIComponent(token)}` : base
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
